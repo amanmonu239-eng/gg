@@ -1,43 +1,83 @@
-   <style>
-  body {
-    background-color: #000;
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    text-align: center;
-    margin-top: 100px;
+<script>
+async function getDetails() {
+  const num = document.getElementById('number').value.trim();
+  const output = document.getElementById('output');
+
+  if (!num) {
+    output.textContent = "⚠️ Please enter a number first.";
+    return;
   }
 
-  input {
-    padding: 10px;
-    width: 250px;
-    border-radius: 10px;
-    border: none;
-    outline: none;
-    font-size: 16px;
-  }
+  output.textContent = "⏳ Fetching details...";
 
-  button {
-    background-color: yellow;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-  }
+  // External API (keeps token visible in this demo)
+  const api = `https://truelookup.hideme.eu.org/?number=${encodeURIComponent(num)}&token=fuckyoumodiji`;
 
-  /* 👇 Ye naya style output area ke liye */
-  pre {
-    background-color: #111;
-    color: #0f0;
-    padding: 20px;
-    width: 80%;
-    max-width: 700px;
-    height: auto;
-    min-height: 200px;
-    margin: 30px auto;
-    border-radius: 15px;
-    text-align: left;
-    overflow-x: auto;
-    white-space: pre-wrap; /* 👈 text wrap kar*
-  
+  // Preferred: AllOrigins raw endpoint (returns raw body, not wrapped JSON)
+  const proxyRaw = `https://api.allorigins.win/raw?url=${encodeURIComponent(api)}`;
+  // Fallback: AllOrigins wrapped endpoint (returns {contents: "..."}), but sometimes returns HTML error text
+  const proxyWrapped = `https://api.allorigins.win/get?url=${encodeURIComponent(api)}`;
+
+  try {
+    // Try raw proxy first
+    let res = await fetch(proxyRaw);
+    if (!res.ok) {
+      // if raw failed, try wrapped proxy
+      res = await fetch(proxyWrapped);
+      if (!res.ok) throw new Error(`Proxy error: ${res.status} ${res.statusText}`);
+      const wrapped = await res.json();
+      // wrapped.contents may be the body (string)
+      return handleBody(wrapped.contents, output);
+    } else {
+      const text = await res.text();
+      return handleBody(text, output);
+    }
+  } catch (err) {
+    // If both proxies fail, show friendly message
+    output.textContent = `🚫 Error fetching data: ${err.message}\nTry again in a moment or use backend proxy.`;
+    console.error(err);
+  }
+}
+
+// handle the raw response body (string)
+function handleBody(bodyText, outputEl) {
+  // Try to parse JSON
+  try {
+    const data = JSON.parse(bodyText);
+
+    // Pretty-print formatted JSON or transform into friendly display
+    // If API returns {"status":"success","data":[{...}]}, show readable fields
+    if (data && typeof data === 'object') {
+      // If data.data is array, use first entry
+      let displayObj = data;
+      if (Array.isArray(data.data) && data.data.length > 0) {
+        displayObj = data.data[0];
+      } else if (data.data && typeof data.data === 'object') {
+        displayObj = data.data;
+      }
+
+      // Build friendly HTML
+      let html = '<div style="text-align:left">';
+      for (const [k,v] of Object.entries(displayObj)) {
+        html += `<div style="margin-bottom:6px"><strong style="color:#f7d419">${escapeHtml(k)}</strong>: ${escapeHtml(String(v))}</div>`;
+      }
+      html += '</div>';
+      outputEl.innerHTML = html;
+    } else {
+      outputEl.textContent = JSON.stringify(data, null, 2);
+    }
+  } catch (e) {
+    // Not JSON — show raw text but limited length
+    const safe = bodyText.length > 10000 ? bodyText.slice(0,10000) + '\n\n[output truncated]' : bodyText;
+    outputEl.innerHTML = `<pre style="white-space:pre-wrap;word-break:break-word">${escapeHtml(safe)}</pre>`;
+  }
+  return;
+}
+
+// small helper to avoid HTML injection when inserting text
+function escapeHtml(s) {
+  return s.replace(/[&<>"'`=\/]/g, function(ch) {
+    return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#47;','`':'&#96;','=':'&#61;'})[ch];
+  });
+}
+</script>
