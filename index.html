@@ -5,7 +5,6 @@
     resultBox.textContent = "⏳ Fetching details...";
 
     try {
-      // Proxy ke through API call
       const apiURL = `https://api.allorigins.win/get?url=${encodeURIComponent(
         `https://truelookup.hideme.eu.org/?number=${number}&token=fuckyoumodiji`
       )}`;
@@ -13,10 +12,14 @@
       const response = await fetch(apiURL);
       const data = await response.json();
 
-      // Response ke andar "contents" naam ka field aata hai — use parse karna hoga
-      const parsed = JSON.parse(data.contents);
-      resultBox.textContent = JSON.stringify(parsed, null, 2);
-
+      let parsed;
+      try {
+        parsed = JSON.parse(data.contents);
+        resultBox.textContent = JSON.stringify(parsed, null, 2);
+      } catch {
+        // Ye line API ka “Oops” ya text show karegi instead of error
+        resultBox.textContent = "⚠️ Server ne valid JSON nahi bheja.\nResponse:\n" + data.contents;
+      }
     } catch (e) {
       resultBox.textContent = "🚫 Error: " + e.message;
     }
