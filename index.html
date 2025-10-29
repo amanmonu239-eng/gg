@@ -1,27 +1,161 @@
-<script>
-  async function getDetails() {
-    const number = document.getElementById("number").value;
-    const resultBox = document.getElementById("result");
-    resultBox.textContent = "⏳ Fetching details...";
-
-    try {
-      const apiURL = `https://api.allorigins.win/get?url=${encodeURIComponent(
-        `https://truelookup.hideme.eu.org/?number=${number}&token=fuckyoumodiji`
-      )}`;
-
-      const response = await fetch(apiURL);
-      const data = await response.json();
-
-      let parsed;
-      try {
-        parsed = JSON.parse(data.contents);
-        resultBox.textContent = JSON.stringify(parsed, null, 2);
-      } catch {
-        // Ye line API ka “Oops” ya text show karegi instead of error
-        resultBox.textContent = "⚠️ Server ne valid JSON nahi bheja.\nResponse:\n" + data.contents;
-      }
-    } catch (e) {
-      resultBox.textContent = "🚫 Error: " + e.message;
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Birthday Niddhi 🎉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#ff6b81;--muted:#9aa4b2}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Poppins',system-ui,Roboto,Arial; background:linear-gradient(180deg,#071023 0%, #081427 50%, #0b1220 100%); color:#e6eef8; display:flex; align-items:center; justify-content:center; padding:24px;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
-  }
-</script>
+    .card{
+      width:100%; max-width:920px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:20px; padding:36px; box-shadow:0 10px 30px rgba(2,6,23,0.6); position:relative; overflow:hidden; border:1px solid rgba(255,255,255,0.03);
+    }
+    header{display:flex; gap:18px; align-items:center}
+    .badge{width:84px; height:84px; border-radius:50%; background:radial-gradient(circle at 30% 20%, #ffd6e0 0,#ffb3c6 30%, rgba(255,107,129,0.12) 60%); display:flex; align-items:center; justify-content:center; font-weight:800; color:#4a0b14; font-size:28px; box-shadow:0 6px 20px rgba(255,107,129,0.08) inset}
+    h1{margin:0; font-size:36px; line-height:1.05; letter-spacing:-0.5px}
+    p.lead{margin:6px 0 0; color:var(--muted)}
+    .message{
+      margin-top:22px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:22px; border-radius:12px; border:1px solid rgba(255,255,255,0.02);
+    }
+    .message p{margin:0 0 12px; color:#e8f1fb}
+    .signature{display:flex; align-items:center; gap:12px; margin-top:14px}
+    .signature .avatar{width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,#ffdce6,#ffc4da);display:flex;align-items:center;justify-content:center;color:#4a0b14;font-weight:700}
+    .signature .by{font-size:14px;color:var(--muted)}
+    .hearts{position:absolute; right:-30px; top:-30px; pointer-events:none}
+
+    /* little heart animation */
+    .heart{position:absolute; width:18px; height:18px; transform:rotate(-45deg); background:var(--accent); border-radius:4px 4px 0 0; box-shadow:0 6px 20px rgba(255,107,129,0.18)}
+    .heart:before, .heart:after{content:''; position:absolute; width:18px; height:18px; background:var(--accent); border-radius:50%}
+    .heart:before{top:-9px; left:0}
+    .heart:after{left:9px; top:0}
+
+    .controls{display:flex; gap:10px; margin-top:18px}
+    button{cursor:pointer; border:0; padding:10px 14px; border-radius:10px; font-weight:600}
+    .btn-primary{background:linear-gradient(90deg,#ff7b95,#ff6b81); color:white; box-shadow:0 8px 24px rgba(255,107,129,0.18)}
+    .btn-ghost{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03)}
+
+    /* confetti canvas covers */
+    canvas.confetti{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none}
+
+    /* responsive */
+    @media (max-width:560px){
+      h1{font-size:28px}
+      .badge{width:68px;height:68px;font-size:22px}
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <canvas class="confetti" id="confetti"></canvas>
+    <div class="hearts" id="hearts"></div>
+
+    <header>
+      <div class="badge">N💖</div>
+      <div>
+        <h1>Happy Birthday, Niddhi 🎉</h1>
+        <p class="lead">Aajker din ta tomar jonno — aar amar shobar cheye boro wish holo tomake hasi dekha.</p>
+      </div>
+    </header>
+
+    <div class="message">
+      <p>Dear Niddhi,</p>
+      <p>Tomar jonno amar moner shob bhalobasha, shundor asha, aar choto choto golper moto mone kora sob kotha ekane rekhe dichhi. Aaj ami sob cheye beshi chai tumi anek khushi thako — aar amar chotto wish ta jokhon tomar din ta suru korbe tahole mone rakhbe, tumi amar sob kichu.</p>
+      <p><strong>Happy Birthday Niddhi — love u so much, your dear Habi Srimanta.</strong></p>
+      <p style="margin-top:6px;color:var(--muted)">Srimanta loves Niddhi forever 💞</p>
+
+      <div class="signature">
+        <div class="avatar">H</div>
+        <div>
+          <div style="font-weight:700">your dear Habi Srimanta</div>
+          <div class="by">Always with you • Always yours</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-primary" id="playBtn">Play Surprise ✨</button>
+        <button class="btn-ghost" id="confBtn">Show Confetti</button>
+      </div>
+    </div>
+
+    <footer style="margin-top:18px;color:var(--muted);font-size:13px">Made with ❤ for Niddhi — Upload this file to your GitHub repo as <code>index.html</code> and open on GitHub Pages.</footer>
+  </div>
+
+  <script>
+    // little floating hearts generator
+    const heartsWrap = document.getElementById('hearts');
+    function makeHeart(x,y,delay,scale){
+      const el = document.createElement('div'); el.className='heart';
+      el.style.left = x+'px'; el.style.top = y+'px';
+      el.style.opacity = 0; el.style.transform += ' scale('+(scale||1)+')';
+      el.style.transition = 'transform 1.5s cubic-bezier(.2,.9,.3,1), opacity 1.2s';
+      heartsWrap.appendChild(el);
+      requestAnimationFrame(()=>{ el.style.opacity=1; el.style.transform += ' translateY(-80px)'; });
+      setTimeout(()=>{ el.style.opacity=0; el.style.transform += ' translateY(-140px) scale(0.6)'; }, 800+delay||0);
+      setTimeout(()=> el.remove(), 2500+delay||0);
+    }
+    // gently spawn hearts
+    function spawnHearts(){
+      const w = heartsWrap.clientWidth||220; const h = heartsWrap.clientHeight||220;
+      for(let i=0;i<6;i++){
+        const x = Math.random()*w; const y = Math.random()*h;
+        makeHeart(x,y, i*120, 0.9+Math.random()*0.7);
+      }
+    }
+    setInterval(spawnHearts, 1800);
+    spawnHearts();
+
+    // simple confetti using canvas
+    const confCanvas = document.getElementById('confetti');
+    const ctx = confCanvas.getContext('2d');
+    function fitCanvas(){ confCanvas.width = confCanvas.clientWidth; confCanvas.height = confCanvas.clientHeight; }
+    window.addEventListener('resize', fitCanvas); fitCanvas();
+
+    function Confetti(){
+      this.particles = [];
+      this.ticking=false;
+    }
+    Confetti.prototype.pop = function(count){
+      const w=confCanvas.width, h=confCanvas.height;
+      for(let i=0;i<count;i++){
+        this.particles.push({x:w/2, y:h/2, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.9)*8, r:4+Math.random()*6, life:60+Math.random()*60, color:['#ff6b81','#ffd36b','#8be7ff','#b98bff'][Math.floor(Math.random()*4)]});
+      }
+      if(!this.ticking){ this.ticking=true; requestAnimationFrame(()=>this.update()); }
+    }
+    Confetti.prototype.update = function(){
+      ctx.clearRect(0,0,confCanvas.width, confCanvas.height);
+      for(let i=this.particles.length-1;i>=0;i--){
+        const p=this.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.35; p.life--;
+        ctx.save(); ctx.beginPath(); ctx.fillStyle=p.color; ctx.translate(p.x,p.y); ctx.rotate((p.life)*0.1);
+        ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r);
+        ctx.restore();
+        if(p.life<=0 || p.y>confCanvas.height+50) this.particles.splice(i,1);
+      }
+      if(this.particles.length>0) requestAnimationFrame(()=>this.update()); else this.ticking=false;
+    }
+    const conf = new Confetti();
+
+    document.getElementById('confBtn').addEventListener('click', ()=>conf.pop(80));
+
+    // play a gentle chime using WebAudio
+    function playChime(){
+      try{
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        function tone(freq, t){ const o = ctx.createOscillator(); const g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine'; o.frequency.value=freq; g.gain.value=0; o.start(now); g.gain.linearRampToValueAtTime(0.08, now+0.01); g.gain.exponentialRampToValueAtTime(0.0001, now+t+0.2); o.frequency.setValueAtTime(freq, now); o.stop(now+t+0.3); }
+        tone(440,0.4); setTimeout(()=>tone(660,0.45),120); setTimeout(()=>tone(880,0.5),260);
+      }catch(e){ console.warn('Audio not supported', e); }
+    }
+    document.getElementById('playBtn').addEventListener('click', ()=>{ playChime(); conf.pop(120); });
+
+    // optional: auto-trigger confetti & chime once when page loads (commented out to avoid surprise)
+    // setTimeout(()=>{ playChime(); conf.pop(100); }, 900);
+  </script>
+</body>
+</html>
