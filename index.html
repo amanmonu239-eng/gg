@@ -3,165 +3,203 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Number Lookup — Get Details</title>
+  <title>Number Lookup — Cyber Terminal</title>
   <style>
+    /* Hacker-style, neon green theme */
+    :root{--bg1:#071018;--bg2:#041021;--panel:#06121a;--accent:#00ff99;--muted:#6ea8a1}
+    html,body{height:100%;}
     body{
-      font-family: Arial, sans-serif;
-      background:#0f1724;
-      color:#e6eef6;
-      margin:0;
-      padding:30px;
+      margin:0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(0,255,153,0.03), transparent),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#bfeee0;display:flex;align-items:center;justify-content:center;padding:28px
     }
-    .wrap{
-      max-width:900px;
-      margin:auto;
-    }
-    h1{
-      font-size:24px;
-      margin-bottom:8px;
-    }
-    p{color:#9fb0c8;}
-    .card{
-      background:#0b1220;
-      border-radius:12px;
-      padding:20px;
-      box-shadow:0 6px 18px rgba(2,6,23,.6);
-      margin-top:16px;
-    }
-    label{
-      display:block;
-      margin-bottom:8px;
-      color:#9fb0c8;
-    }
-    input[type=text]{
-      width:100%;
-      padding:10px 12px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,.1);
-      background:transparent;
-      color:inherit;
-    }
-    .row{
-      display:grid;
-      grid-template-columns:1fr 150px;
-      gap:10px;
-    }
-    button{
-      background:#38bdf8;
-      color:#042033;
-      border:0;
-      padding:10px 12px;
-      border-radius:8px;
-      font-weight:700;
-      cursor:pointer;
-    }
-    button:hover{background:#0ea5e9;color:white;}
-    pre{
-      background:#071427;
-      padding:12px;
-      border-radius:8px;
-      overflow:auto;
-      max-height:360px;
-      white-space:pre-wrap;
-      word-wrap:break-word;
-    }
-    .muted{color:#8fa6bf;font-size:13px;}
+    .card{width:960px;max-width:96%;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(0,255,153,0.06);box-shadow:0 10px 40px rgba(0,0,0,0.6);border-radius:12px;padding:20px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .logo{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,#002b22,#003a2e);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,0.5)}
+    .logo svg{filter:drop-shadow(0 4px 8px rgba(0,255,153,0.08))}
+    h1{margin:0;font-size:20px;color:var(--accent);text-shadow:0 2px 12px rgba(0,255,153,0.06)}
+    p.lead{margin:2px 0 0;color:var(--muted);font-size:13px}
+
+    .main{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    @media(max-width:900px){.main{grid-template-columns:1fr}}
+
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.02)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+    input[type=text]{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-family:inherit;font-size:15px}
+    .controls{display:flex;gap:10px;margin-top:12px}
+    .btn{background:transparent;border:1px solid rgba(0,255,153,0.12);padding:10px 12px;border-radius:8px;color:var(--accent);cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,rgba(0,255,153,0.06),rgba(0,255,153,0.02));border-color:rgba(0,255,153,0.22)}
+    .btn.ghost{border-color:rgba(255,255,255,0.04);color:var(--muted)}
+
+    /* Result terminal */
+    .terminal{background:#000a05;border-radius:8px;padding:14px;height:420px;overflow:auto;border:1px solid rgba(0,255,153,0.06);box-shadow:inset 0 2px 8px rgba(0,0,0,0.6)}
+    .terminal .line{font-family:ui-monospace,monospace;color:#a8ffd6;line-height:1.5;font-size:13px;white-space:pre-wrap}
+    .muted-line{color:#4e7b6b}
+
+    .field{display:flex;justify-content:space-between;padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02)}
+    .key{color:#7ef4b8;font-weight:700}
+    .value{color:#c9ffe1}
+
+    .loader{width:40px;height:40px;border-radius:50%;border:4px solid rgba(0,255,153,0.12);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .hint{font-size:12px;color:var(--muted);margin-top:10px}
+
+    .small{font-size:12px;color:var(--muted)}
+
+    /* typing cursor for animation */
+    .typing { display:inline-block; border-right:2px solid rgba(0,255,153,0.85); padding-right:6px; animation:blink 1s steps(2) infinite;}
+    @keyframes blink{50%{border-color:transparent}} 
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>📱 Number Lookup Tool</h1>
-    <p>Enter a mobile number and click <b>Get Details</b> to fetch info from both APIs.</p>
-
-    <div class="card">
-      <label for="number">Enter Mobile Number</label>
-      <div class="row">
-        <input id="number" type="text" placeholder="e.g. 9876543210" />
-        <button id="get">Get Details</button>
+  <div class="card">
+    <header>
+      <div class="logo" aria-hidden>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="#001d12"/><path d="M7 12h10M7 8h10M7 16h6" stroke="#00ff99" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-
-      <div style="margin-top:15px;display:flex;gap:8px;">
-        <button id="clear">Clear</button>
-        <button id="fetchBoth">Fetch Both APIs</button>
+      <div>
+        <h1>Cyber Lookup — Terminal</h1>
+        <p class="lead">Professional hacker-style UI. Enter a number and get clean parsed details (no raw JSON).</p>
       </div>
+    </header>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
-        <div>
-          <h3>API 1 — Aadhaar Info</h3>
-          <pre id="out1">Not fetched yet.</pre>
+    <div class="main">
+      <div class="panel">
+        <label for="number">Mobile number</label>
+        <input id="number" placeholder="e.g. 9876543210" />
+
+        <div class="controls">
+          <button id="get" class="btn primary">Get Details</button>
+          <button id="clear" class="btn ghost">Clear</button>
+          <div id="spinner" style="display:none" class="loader" aria-hidden></div>
         </div>
-        <div>
-          <h3>API 2 — Mobile Info</h3>
-          <pre id="out2">Not fetched yet.</pre>
-        </div>
+
+        <p class="hint">Only digits allowed. This demo calls a single API; ensure the API allows CORS for github.io.</p>
+
+        <div style="margin-top:12px" class="small">Live endpoint: <code>https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number={NUMBER}</code></div>
       </div>
 
-      <p class="muted">If you see a CORS error, enable <code>Access-Control-Allow-Origin</code> on API side or use a proxy server.</p>
+      <div>
+        <div class="terminal" id="terminal" aria-live="polite">
+          <div class="line muted-line">Ready. Enter a number and press <strong>Get Details</strong>.</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
+    // Configuration
+    const apiTemplate = 'https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number={NUMBER}';
+
     const numberInput = document.getElementById('number');
-    const out1 = document.getElementById('out1');
-    const out2 = document.getElementById('out2');
     const getBtn = document.getElementById('get');
     const clearBtn = document.getElementById('clear');
-    const fetchBothBtn = document.getElementById('fetchBoth');
+    const spinner = document.getElementById('spinner');
+    const terminal = document.getElementById('terminal');
 
-    // APIs
-    const api1Template = 'https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number={NUMBER}';
-    const api2Template = 'https://mynkapi.amit1100941.workers.dev/?mobile={NUMBER}&key=onlymynk';
-
-    // ✅ Fixed regex (digits only)
-    function isValidNumber(n) {
-      return /^\d{6,14}$/.test(n);
+    function pushLine(text, opts={}){
+      const div = document.createElement('div');
+      div.className = 'line';
+      if(opts.muted) div.className += ' muted-line';
+      div.textContent = text;
+      terminal.appendChild(div);
+      terminal.scrollTop = terminal.scrollHeight;
+      return div;
     }
 
-    async function fetchJson(url) {
+    function clearTerminal(){ terminal.innerHTML = ''; pushLine('Ready. Enter a number and press Get Details.', {muted:true}); }
+
+    function isValidNumber(n){ return /^\\d{6,14}$/.test(n); }
+
+    async function fetchJson(url){
       const res = await fetch(url);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if(!res.ok) throw new Error('HTTP '+res.status+' '+res.statusText);
       const text = await res.text();
-      try { return JSON.parse(text); } catch { return text; }
+      try{ return JSON.parse(text); } catch { return text; }
     }
 
-    async function getDetails() {
+    // Typing animation for lines array. Returns when finished.
+    async function typeLines(lines, speed=18){
+      for(const line of lines){
+        const node = document.createElement('div');
+        node.className = 'line';
+        terminal.appendChild(node);
+        await typeInto(node, line, speed);
+      }
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function typeInto(node, text, speed){
+      return new Promise(resolve=>{
+        let i=0;
+        const cursor = document.createElement('span'); cursor.className='typing';
+        node.appendChild(cursor);
+        function step(){
+          if(i<text.length){
+            cursor.insertAdjacentText('beforebegin', text[i]);
+            i++; terminal.scrollTop = terminal.scrollHeight; setTimeout(step, speed);
+          } else {
+            cursor.remove(); resolve();
+          }
+        }
+        step();
+      });
+    }
+
+    // Pretty format: convert object to array of 'Key: Value' strings
+    function formatResponse(obj){
+      if(typeof obj === 'string') return [obj];
+      if(!obj || typeof obj !== 'object') return [String(obj)];
+      const lines = [];
+      for(const k of Object.keys(obj)){
+        let label = k.replace(/[_-]/g,' ');
+        label = label.split(' ').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' ');
+        let val = obj[k];
+        if(val === null || val === undefined) val = '';
+        else if(typeof val === 'object') val = JSON.stringify(val);
+        lines.push(`${label}: ${val}`);
+      }
+      if(lines.length===0) return ['(no data)'];
+      return lines;
+    }
+
+    async function getDetails(){
       const raw = numberInput.value.trim();
-      if (!isValidNumber(raw)) {
+      if(!isValidNumber(raw)){
         alert('Please enter digits only (6–14 digits).');
         return;
       }
 
-      const number = encodeURIComponent(raw);
-      out1.textContent = 'Fetching API 1...';
-      out2.textContent = 'Fetching API 2...';
+      clearTerminal();
+      spinner.style.display = 'inline-block';
+      getBtn.disabled = true;
+      clearBtn.disabled = true;
 
-      const url1 = api1Template.replace('{NUMBER}', number);
-      const url2 = api2Template.replace('{NUMBER}', number);
+      const url = apiTemplate.replace('{NUMBER}', encodeURIComponent(raw));
+      pushLine('\u25B6 Calling API...', {muted:true});
 
-      try {
-        const [r1, r2] = await Promise.all([
-          fetchJson(url1).catch(e => ({ error: e.message })),
-          fetchJson(url2).catch(e => ({ error: e.message }))
-        ]);
-
-        out1.textContent = typeof r1 === 'object' ? JSON.stringify(r1, null, 2) : String(r1);
-        out2.textContent = typeof r2 === 'object' ? JSON.stringify(r2, null, 2) : String(r2);
-      } catch (e) {
-        out1.textContent = 'Error: ' + e.message;
-        out2.textContent = 'Error: ' + e.message;
+      try{
+        const res = await fetchJson(url);
+        pushLine('');
+        const formatted = formatResponse(res);
+        await typeLines(['-- Result --', ...formatted], 14);
+      }catch(e){
+        await typeLines(['Error: '+e.message], 14);
+      }finally{
+        spinner.style.display='none';
+        getBtn.disabled = false;
+        clearBtn.disabled = false;
       }
     }
 
     getBtn.addEventListener('click', getDetails);
-    fetchBothBtn.addEventListener('click', getDetails);
-    clearBtn.addEventListener('click', () => {
-      numberInput.value = '';
-      out1.textContent = 'Not fetched yet.';
-      out2.textContent = 'Not fetched yet.';
-    });
-    numberInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') getDetails();
-    });
+    clearBtn.addEventListener('click', ()=>{ numberInput.value=''; clearTerminal(); });
+    numberInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') getDetails(); });
+
+    // initial
+    clearTerminal();
   </script>
 </body>
 </html>
