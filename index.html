@@ -3,54 +3,100 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Number Lookup — Enter Number</title>
+  <title>Number Lookup — Get Details</title>
   <style>
-    body{font-family:Inter,system-ui;background:#0f1724;color:#e6eef6;margin:0;padding:28px}
-    .wrap{max-width:920px;margin:0 auto}
-    header{display:flex;align-items:center;gap:12px}
-    h1{font-size:20px;margin:0}
-    .card{background:#0b1220;border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,.6);margin-top:16px}
-    label{display:block;margin-bottom:8px;color:#9fb0c8}
-    input[type=text]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:inherit}
-    .row{display:grid;grid-template-columns:1fr 140px;gap:12px}
-    button{background:#38bdf8;color:#042033;border:0;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
-    pre{background:#071427;padding:12px;border-radius:8px;overflow:auto;max-height:360px}
-    .muted{color:#8fa6bf;font-size:13px}
-    @media(max-width:720px){.row{grid-template-columns:1fr 1fr}}
+    body{
+      font-family: Arial, sans-serif;
+      background:#0f1724;
+      color:#e6eef6;
+      margin:0;
+      padding:30px;
+    }
+    .wrap{
+      max-width:900px;
+      margin:auto;
+    }
+    h1{
+      font-size:24px;
+      margin-bottom:8px;
+    }
+    p{color:#9fb0c8;}
+    .card{
+      background:#0b1220;
+      border-radius:12px;
+      padding:20px;
+      box-shadow:0 6px 18px rgba(2,6,23,.6);
+      margin-top:16px;
+    }
+    label{
+      display:block;
+      margin-bottom:8px;
+      color:#9fb0c8;
+    }
+    input[type=text]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.1);
+      background:transparent;
+      color:inherit;
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr 150px;
+      gap:10px;
+    }
+    button{
+      background:#38bdf8;
+      color:#042033;
+      border:0;
+      padding:10px 12px;
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    button:hover{background:#0ea5e9;color:white;}
+    pre{
+      background:#071427;
+      padding:12px;
+      border-radius:8px;
+      overflow:auto;
+      max-height:360px;
+      white-space:pre-wrap;
+      word-wrap:break-word;
+    }
+    .muted{color:#8fa6bf;font-size:13px;}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="#062235"/><path d="M7 12h10M7 8h10M7 16h6" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div>
-        <h1>Number Lookup — Get Details</h1>
-        <p class="muted">Enter a mobile number below and click <strong>Get Details</strong>. The page will call two APIs (if CORS allows) and show combined results.</p>
-      </div>
-    </header>
+    <h1>📱 Number Lookup Tool</h1>
+    <p>Enter a mobile number and click <b>Get Details</b> to fetch info from both APIs.</p>
 
     <div class="card">
-      <label for="number">Enter Mobile Number (digits only)</label>
+      <label for="number">Enter Mobile Number</label>
       <div class="row">
-        <input id="number" type="text" placeholder="e.g. 9876543210" value="">
+        <input id="number" type="text" placeholder="e.g. 9876543210" />
         <button id="get">Get Details</button>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+
+      <div style="margin-top:15px;display:flex;gap:8px;">
         <button id="clear">Clear</button>
-        <button id="fetchBoth">Fetch Both (separate)</button>
+        <button id="fetchBoth">Fetch Both APIs</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
         <div>
-          <h3 style="margin:0 0 8px 0">API 1 — Number ➜ Aadhaar</h3>
+          <h3>API 1 — Aadhaar Info</h3>
           <pre id="out1">Not fetched yet.</pre>
         </div>
         <div>
-          <h3 style="margin:0 0 8px 0">API 2 — Mobile Info</h3>
+          <h3>API 2 — Mobile Info</h3>
           <pre id="out2">Not fetched yet.</pre>
         </div>
       </div>
 
-      <div style="margin-top:12px" class="muted">Notes: This is a static GitHub Pages demo. If responses fail with CORS errors, the APIs need <code>Access-Control-Allow-Origin</code> enabled or you must use a server proxy.</div>
+      <p class="muted">If you see a CORS error, enable <code>Access-Control-Allow-Origin</code> on API side or use a proxy server.</p>
     </div>
   </div>
 
@@ -62,56 +108,60 @@
     const clearBtn = document.getElementById('clear');
     const fetchBothBtn = document.getElementById('fetchBoth');
 
-    // Template endpoints (we'll replace the number param dynamically)
+    // APIs
     const api1Template = 'https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number={NUMBER}';
     const api2Template = 'https://mynkapi.amit1100941.workers.dev/?mobile={NUMBER}&key=onlymynk';
 
-    function isValidNumber(n){
-      // basic validation: 10-13 digits
-      return /^\\d{6,14}$/.test(n);
+    // ✅ Fixed regex (digits only)
+    function isValidNumber(n) {
+      return /^\d{6,14}$/.test(n);
     }
 
-    async function fetchJson(url){
+    async function fetchJson(url) {
       const res = await fetch(url);
-      if(!res.ok) throw new Error('HTTP '+res.status+' '+res.statusText+' — '+url);
-      const ct = res.headers.get('content-type') || '';
-      if(ct.includes('application/json')) return res.json();
-      return res.text();
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      try { return JSON.parse(text); } catch { return text; }
     }
 
-    async function getDetails(){
+    async function getDetails() {
       const raw = numberInput.value.trim();
-      if(!isValidNumber(raw)){
-        alert('Please enter a valid number (digits only).');
+      if (!isValidNumber(raw)) {
+        alert('Please enter digits only (6–14 digits).');
         return;
       }
+
       const number = encodeURIComponent(raw);
-      out1.textContent = 'Loading API 1...';
-      out2.textContent = 'Loading API 2...';
+      out1.textContent = 'Fetching API 1...';
+      out2.textContent = 'Fetching API 2...';
 
       const url1 = api1Template.replace('{NUMBER}', number);
       const url2 = api2Template.replace('{NUMBER}', number);
 
-      try{
+      try {
         const [r1, r2] = await Promise.all([
-          fetchJson(url1).catch(e=>({error: String(e)})),
-          fetchJson(url2).catch(e=>({error: String(e)}))
+          fetchJson(url1).catch(e => ({ error: e.message })),
+          fetchJson(url2).catch(e => ({ error: e.message }))
         ]);
+
         out1.textContent = typeof r1 === 'object' ? JSON.stringify(r1, null, 2) : String(r1);
         out2.textContent = typeof r2 === 'object' ? JSON.stringify(r2, null, 2) : String(r2);
-      }catch(e){
-        out1.textContent = 'Error: '+e.message;
-        out2.textContent = 'Error: '+e.message;
+      } catch (e) {
+        out1.textContent = 'Error: ' + e.message;
+        out2.textContent = 'Error: ' + e.message;
       }
     }
 
-    document.getElementById('get').addEventListener('click', getDetails);
-    document.getElementById('fetchBoth').addEventListener('click', getDetails);
-    document.getElementById('clear').addEventListener('click', ()=>{ numberInput.value=''; out1.textContent='Not fetched yet.'; out2.textContent='Not fetched yet.'; });
-
-    // allow Enter key
-    numberInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') getDetails(); });
-
+    getBtn.addEventListener('click', getDetails);
+    fetchBothBtn.addEventListener('click', getDetails);
+    clearBtn.addEventListener('click', () => {
+      numberInput.value = '';
+      out1.textContent = 'Not fetched yet.';
+      out2.textContent = 'Not fetched yet.';
+    });
+    numberInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') getDetails();
+    });
   </script>
 </body>
 </html>
