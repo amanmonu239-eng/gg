@@ -3,76 +3,115 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Number Info API Demo</title>
+  <title>Number Lookup — Enter Number</title>
   <style>
     body{font-family:Inter,system-ui;background:#0f1724;color:#e6eef6;margin:0;padding:28px}
-    .wrap{max-width:900px;margin:auto}
-    h1{font-size:22px}
-    .card{background:#0b1220;border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,.6)}
-    button{background:#38bdf8;color:#042033;border:0;padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer;margin-top:10px}
-    pre{background:#071427;padding:12px;border-radius:8px;overflow:auto;max-height:420px;margin-top:10px}
+    .wrap{max-width:920px;margin:0 auto}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:20px;margin:0}
+    .card{background:#0b1220;border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,.6);margin-top:16px}
+    label{display:block;margin-bottom:8px;color:#9fb0c8}
+    input[type=text]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:inherit}
+    .row{display:grid;grid-template-columns:1fr 140px;gap:12px}
+    button{background:#38bdf8;color:#042033;border:0;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    pre{background:#071427;padding:12px;border-radius:8px;overflow:auto;max-height:360px}
+    .muted{color:#8fa6bf;font-size:13px}
+    @media(max-width:720px){.row{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>📱 Number Details Demo</h1>
-    <p>Below are two APIs — one for number-to-Aadhaar lookup and another for mobile info. Click fetch to test them.</p>
+    <header>
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="#062235"/><path d="M7 12h10M7 8h10M7 16h6" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <h1>Number Lookup — Get Details</h1>
+        <p class="muted">Enter a mobile number below and click <strong>Get Details</strong>. The page will call two APIs (if CORS allows) and show combined results.</p>
+      </div>
+    </header>
 
     <div class="card">
-      <h2>API 1 — Number ➜ Aadhaar</h2>
-      <p><b>Endpoint:</b> <code>https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number=8509688837</code></p>
-      <button id="call1">Fetch API 1</button>
-      <pre id="out1">Waiting...</pre>
-    </div>
+      <label for="number">Enter Mobile Number (digits only)</label>
+      <div class="row">
+        <input id="number" type="text" placeholder="e.g. 9876543210" value="">
+        <button id="get">Get Details</button>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button id="clear">Clear</button>
+        <button id="fetchBoth">Fetch Both (separate)</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
+        <div>
+          <h3 style="margin:0 0 8px 0">API 1 — Number ➜ Aadhaar</h3>
+          <pre id="out1">Not fetched yet.</pre>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px 0">API 2 — Mobile Info</h3>
+          <pre id="out2">Not fetched yet.</pre>
+        </div>
+      </div>
 
-    <div class="card" style="margin-top:20px">
-      <h2>API 2 — Mobile Info</h2>
-      <p><b>Endpoint:</b> <code>https://mynkapi.amit1100941.workers.dev/?mobile=9876543210&key=onlymynk</code></p>
-      <button id="call2">Fetch API 2</button>
-      <pre id="out2">Waiting...</pre>
-    </div>
-
-    <div style="margin-top:20px">
-      <button id="callBoth">Fetch Both</button>
+      <div style="margin-top:12px" class="muted">Notes: This is a static GitHub Pages demo. If responses fail with CORS errors, the APIs need <code>Access-Control-Allow-Origin</code> enabled or you must use a server proxy.</div>
     </div>
   </div>
 
   <script>
-    const out1=document.getElementById('out1');
-    const out2=document.getElementById('out2');
+    const numberInput = document.getElementById('number');
+    const out1 = document.getElementById('out1');
+    const out2 = document.getElementById('out2');
+    const getBtn = document.getElementById('get');
+    const clearBtn = document.getElementById('clear');
+    const fetchBothBtn = document.getElementById('fetchBoth');
+
+    // Template endpoints (we'll replace the number param dynamically)
+    const api1Template = 'https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number={NUMBER}';
+    const api2Template = 'https://mynkapi.amit1100941.workers.dev/?mobile={NUMBER}&key=onlymynk';
+
+    function isValidNumber(n){
+      // basic validation: 10-13 digits
+      return /^\\d{6,14}$/.test(n);
+    }
 
     async function fetchJson(url){
-      const res=await fetch(url);
-      if(!res.ok) throw new Error(res.status+' '+res.statusText);
-      const ct=res.headers.get('content-type')||'';
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP '+res.status+' '+res.statusText+' — '+url);
+      const ct = res.headers.get('content-type') || '';
       if(ct.includes('application/json')) return res.json();
       return res.text();
     }
 
-    async function call1(){
-      out1.textContent='Loading...';
+    async function getDetails(){
+      const raw = numberInput.value.trim();
+      if(!isValidNumber(raw)){
+        alert('Please enter a valid number (digits only).');
+        return;
+      }
+      const number = encodeURIComponent(raw);
+      out1.textContent = 'Loading API 1...';
+      out2.textContent = 'Loading API 2...';
+
+      const url1 = api1Template.replace('{NUMBER}', number);
+      const url2 = api2Template.replace('{NUMBER}', number);
+
       try{
-        const data=await fetchJson('https://phoneinfo.amitdas.site/api/main/number-to-adher.php/?number=8509688837');
-        out1.textContent=JSON.stringify(data,null,2);
-      }catch(e){out1.textContent='Error: '+e.message;}
+        const [r1, r2] = await Promise.all([
+          fetchJson(url1).catch(e=>({error: String(e)})),
+          fetchJson(url2).catch(e=>({error: String(e)}))
+        ]);
+        out1.textContent = typeof r1 === 'object' ? JSON.stringify(r1, null, 2) : String(r1);
+        out2.textContent = typeof r2 === 'object' ? JSON.stringify(r2, null, 2) : String(r2);
+      }catch(e){
+        out1.textContent = 'Error: '+e.message;
+        out2.textContent = 'Error: '+e.message;
+      }
     }
 
-    async function call2(){
-      out2.textContent='Loading...';
-      try{
-        const data=await fetchJson('https://mynkapi.amit1100941.workers.dev/?mobile=9876543210&key=onlymynk');
-        out2.textContent=JSON.stringify(data,null,2);
-      }catch(e){out2.textContent='Error: '+e.message;}
-    }
+    document.getElementById('get').addEventListener('click', getDetails);
+    document.getElementById('fetchBoth').addEventListener('click', getDetails);
+    document.getElementById('clear').addEventListener('click', ()=>{ numberInput.value=''; out1.textContent='Not fetched yet.'; out2.textContent='Not fetched yet.'; });
 
-    document.getElementById('call1').addEventListener('click',call1);
-    document.getElementById('call2').addEventListener('click',call2);
+    // allow Enter key
+    numberInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') getDetails(); });
 
-    document.getElementById('callBoth').addEventListener('click',async()=>{
-      out1.textContent='Loading API 1...';
-      out2.textContent='Loading API 2...';
-      await Promise.all([call1(),call2()]);
-    });
   </script>
 </body>
 </html>
