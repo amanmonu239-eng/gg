@@ -77,6 +77,122 @@
     // ✅ Correct API format
     const apiTemplate = "https://numapi.anshapi.workers.dev/?num={NUMBER}";
 
-    const numberInput = document.getElementBy
+    const numberInput = document.getElementById('number');
+    const getBtn = document.getElementById('get');
+    const clearBtn = document.getElementById('clear');
+    const spinner = document.getElementById('spinner');
+    const terminal = document.getElementById('terminal');
+
+    function pushLine(text, muted=false){
+      const div = document.createElement('div');
+      div.className = muted ? 'line muted-line' : 'line';
+      div.textContent = text;
+      terminal.appendChild(div);
+      terminal.scrollTop = terminal.scrollHeight;
+      return div;
+    }
+
+    function clearTerminal(){
+      terminal.innerHTML = '';
+      pushLine('Ready. Enter a number and press Get Details.', true);
+    }
+
+    function cleanToDigits(s){
+      return String(s || '').replace(/\D/g, '');
+    }
+
+    function isValidDigits(digits){
+      return /^\d{6,14}$/.test(digits);
+    }
+
+    async function fetchJson(url){
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const text = await res.text();
+      try{ return JSON.parse(text); }catch{return text;}
+    }
+
+    async function typeLines(lines, speed=14){
+      for(const line of lines){
+        const node = document.createElement('div');
+        node.className = 'line';
+        terminal.appendChild(node);
+        await typeInto(node, line, speed);
+      }
+    }
+
+    function typeInto(node, text, speed){
+      return new Promise(done=>{
+        let i=0;
+        const cursor = document.createElement('span');
+        cursor.className='typing';
+        node.appendChild(cursor);
+
+        function step(){
+          if(i < text.length){
+            cursor.insertAdjacentText('beforebegin', text[i]);
+            i++;
+            setTimeout(step, speed);
+          }else{
+            cursor.remove();
+            done();
+          }
+        }
+        step();
+      });
+    }
+
+    function formatResponse(obj){
+      if(typeof obj !== 'object' || obj === null) return [String(obj)];
+      const lines=[];
+      for(const k of Object.keys(obj)){
+        let label = k.replace(/[_-]/g,' ');
+        label = label.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+        let val = obj[k];
+        if(typeof val === 'object') val = JSON.stringify(val);
+        lines.push(`${label}: ${val}`);
+      }
+      return lines.length ? lines : ['(no data)'];
+    }
+
+    async function getDetails(){
+      const cleaned = cleanToDigits(numberInput.value);
+      if(!isValidDigits(cleaned)){
+        clearTerminal();
+        pushLine("Digits: " + (cleaned || "(none)"), true);
+        pushLine("Enter 6–14 digit number.", true);
+        numberInput.focus();
+        return;
+      }
+
+      clearTerminal();
+      spinner.style.display="inline-block";
+      getBtn.disabled=true;
+      clearBtn.disabled=true;
+
+      const url = apiTemplate.replace("{NUMBER}", cleaned);
+      pushLine("▶ Lookup: " + cleaned, true);
+
+      try{
+        const data = await fetchJson(url);
+        const formatted = formatResponse(data);
+        await typeLines(["-- Result --", ...formatted], 12);
+      }catch(err){
+        await typeLines(["Error: " + err.message]);
+      }
+
+      spinner.style.display="none";
+      getBtn.disabled=false;
+      clearBtn.disabled=false;
+    }
+
+    getBtn.addEventListener('click', getDetails);
+    clearBtn.addEventListener('click', ()=>{numberInput.value=""; clearTerminal();});
+    numberInput.addEventListener('keydown', e=>{ if(e.key==="Enter") getDetails(); });
+
+    clearTerminal();
+  </script>
+</body>
+</html>
 
    
