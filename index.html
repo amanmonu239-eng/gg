@@ -34,11 +34,8 @@
     .loader{width:40px;height:40px;border-radius:50%;border:4px solid rgba(0,255,153,0.12);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-left:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
     .hint{font-size:12px;color:var(--muted);margin-top:10px}
-    .small{font-size:12px;color:var(--muted)}
     .typing { display:inline-block; border-right:2px solid rgba(0,255,153,0.85); padding-right:6px; animation:blink 1s steps(2) infinite;}
     @keyframes blink{50%{border-color:transparent}}
-    /* hide the live endpoint element (we won't show raw API) */ 
-    .live-endpoint{display:none!important}
   </style>
 </head>
 <body>
@@ -49,7 +46,7 @@
       </div>
       <div>
         <h1>Cyber Lookup — Terminal</h1>
-        <p class="lead">Professional hacker-style UI. Enter a number and get clean parsed details (no raw JSON).</p>
+        <p class="lead">Professional hacker-style UI. Enter a number and fetch parsed details.</p>
       </div>
     </header>
 
@@ -61,150 +58,25 @@
         <div class="controls">
           <button id="get" class="btn primary">Get Details</button>
           <button id="clear" class="btn ghost">Clear</button>
-          <div id="spinner" style="display:none" class="loader" aria-hidden></div>
+          <div id="spinner" style="display:none" class="loader"></div>
         </div>
 
-        <p class="hint">You can paste numbers with spaces or +91 — the field will clean them automatically. Only digits are used for the lookup (6–14 digits allowed).</p>
+        <p class="hint">Spaces or +91 allowed — system auto-cleans to digits.</p>
 
-        <!-- hidden: live endpoint removed from view -->
-        <div class="live-endpoint small">Live endpoint hidden for privacy</div>
       </div>
 
       <div>
-        <div class="terminal" id="terminal" aria-live="polite">
-          <div class="line muted-line">Ready. Enter a number and press <strong>Get Details</strong>.</div>
+        <div class="terminal" id="terminal">
+          <div class="line muted-line">Ready. Enter a number and press Get Details.</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Single API template (kept only in script; not shown on page)
-    const apiTemplate = 'https://numapi.anshapi.workers.dev/?num= ';
+    // ✅ Correct API format
+    const apiTemplate = "https://numapi.anshapi.workers.dev/?num={NUMBER}";
 
-    const numberInput = document.getElementById('number');
-    const getBtn = document.getElementById('get');
-    const clearBtn = document.getElementById('clear');
-    const spinner = document.getElementById('spinner');
-    const terminal = document.getElementById('terminal');
-
-    function pushLine(text, muted=false){
-      const div = document.createElement('div');
-      div.className = muted ? 'line muted-line' : 'line';
-      div.textContent = text;
-      terminal.appendChild(div);
-      terminal.scrollTop = terminal.scrollHeight;
-      return div;
-    }
-
-    function clearTerminal(){ terminal.innerHTML = ''; pushLine('Ready. Enter a number and press Get Details.', true); }
-
-    // Clean input: remove any non-digit characters (spaces, +, dashes) and return digits-only string
-    function cleanToDigits(s){
-      return String(s || '').replace(/\D/g, '');
-    }
-
-    // Validation: after cleaning, require 6 to 14 digits
-    function isValidDigits(digits){
-      return /^\d{6,14}$/.test(digits);
-    }
-
-    async function fetchJson(url){
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('HTTP '+res.status+' '+res.statusText);
-      const txt = await res.text();
-      try{ return JSON.parse(txt); } catch { return txt; }
-    }
-
-    async function typeLines(lines, speed=14){
-      for(const line of lines){
-        const node = document.createElement('div');
-        node.className = 'line';
-        terminal.appendChild(node);
-        await typeInto(node, line, speed);
-      }
-      terminal.scrollTop = terminal.scrollHeight;
-    }
-
-    function typeInto(node, text, speed){
-      return new Promise(resolve=>{
-        let i=0;
-        const cursor = document.createElement('span'); cursor.className='typing';
-        node.appendChild(cursor);
-        function step(){
-          if(i<text.length){
-            cursor.insertAdjacentText('beforebegin', text[i]);
-            i++; terminal.scrollTop = terminal.scrollHeight;
-            setTimeout(step, speed);
-          } else {
-            cursor.remove(); resolve();
-          }
-        }
-        step();
-      });
-    }
-
-    function formatResponse(obj){
-      if(typeof obj === 'string') return [obj];
-      if(!obj || typeof obj !== 'object') return [String(obj)];
-      const lines = [];
-      // prefer stable key order: use Object.keys
-      for(const k of Object.keys(obj)){
-        let label = k.replace(/[_-]/g,' ');
-        label = label.split(' ').map(s=> s.charAt(0).toUpperCase()+s.slice(1)).join(' ');
-        let val = obj[k];
-        if(val === null || val === undefined) val = '';
-        else if(typeof val === 'object') val = JSON.stringify(val);
-        lines.push(`${label}: ${val}`);
-      }
-      if(lines.length===0) return ['(no data)'];
-      return lines;
-    }
-
-    async function getDetails(){
-      const raw = numberInput.value.trim();
-      const digits = cleanToDigits(raw);
-
-      if(!isValidDigits(digits)){
-        // show friendly message (no blocking alert)
-        clearTerminal();
-        pushLine('Input cleaned to digits: ' + (digits || '(none)'), true);
-        pushLine('Please enter a number with 6–14 digits (after cleaning).', true);
-        // also focus the input for correction
-        numberInput.focus();
-        return;
-      }
-
-      clearTerminal();
-      spinner.style.display = 'inline-block';
-      getBtn.disabled = true;
-      clearBtn.disabled = true;
-
-      pushLine('\u25B6 Initiating lookup for: ' + digits, true);
-      const url = apiTemplate.replace('{NUMBER}', encodeURIComponent(digits));
-
-      try{
-        const res = await fetchJson(url);
-        pushLine('');
-        const formatted = formatResponse(res);
-        await typeLines(['-- Result --', ...formatted], 12);
-      }catch(e){
-        await typeLines(['Error: ' + e.message], 12);
-      }finally{
-        spinner.style.display = 'none';
-        getBtn.disabled = false;
-        clearBtn.disabled = false;
-      }
-    }
-
-    getBtn.addEventListener('click', getDetails);
-    clearBtn.addEventListener('click', ()=>{ numberInput.value=''; clearTerminal(); });
-    numberInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') getDetails(); });
-
-    // initial
-    clearTerminal();
-  </script>
-</body>
-</html>
+    const numberInput = document.getElementBy
 
    
