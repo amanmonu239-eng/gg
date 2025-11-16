@@ -74,7 +74,7 @@
   </div>
 
   <script>
-    // ✅ Correct API format
+    // API base (no placeholder) — we'll concat the cleaned number
     const apiTemplate = "https://veerulookup.onrender.com/search_phone?number=";
 
     const numberInput = document.getElementById('number');
@@ -170,15 +170,18 @@
       getBtn.disabled=true;
       clearBtn.disabled=true;
 
-      const url = apiTemplate.replace("{NUMBER}", cleaned);
+      // <--- FIX: concatenate cleaned number to template
+      const url = apiTemplate + cleaned;
       pushLine("▶ Lookup: " + cleaned, true);
+      pushLine("Requesting: " + url, true);
 
       try{
         const data = await fetchJson(url);
         const formatted = formatResponse(data);
         await typeLines(["-- Result --", ...formatted], 12);
       }catch(err){
-        await typeLines(["Error: " + err.message]);
+        // show helpful error info (network/CORS/HTTP)
+        await typeLines(["Error: " + (err.message || err),  "(If this is a CORS error, enable CORS on the API server)"]);
       }
 
       spinner.style.display="none";
@@ -194,5 +197,3 @@
   </script>
 </body>
 </html>
-
-   
